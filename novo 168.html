@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catálogo de Bombas Submersas Leão</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/docxtemplater/3.30.0/docxtemplater.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 20px;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        input {
+            padding: 10px;
+            width: 300px;
+            font-size: 16px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .bombas-lista {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+        }
+        .bomba {
+            padding: 15px;
+            background-color: #008CBA;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .bomba:hover {
+            background-color: #005f73;
+        }
+        canvas {
+            margin-top: 20px;
+            width: 500px;
+            height: 500px;
+            margin-left: auto;
+            margin-right: auto;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .info-bomba {
+            margin-top: 20px;
+            font-size: 18px;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .resultado-pesquisa {
+            margin-top: 10px;
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            width: 300px;
+            margin-left: auto;
+            margin-right: auto;
+            text-align: left;
+            background-color: #fff;
+        }
+        .resultado-pesquisa div {
+            padding: 10px;
+            cursor: pointer;
+            border-bottom: 1px solid #ccc;
+        }
+        .resultado-pesquisa div:hover {
+            background-color: #f0f0f0;
+        }
+        .exportar-botao {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .exportar-botao:hover {
+            background-color: #45a049;
+        }
+        .sugestoes-bomba {
+            margin-top: 20px;
+            font-size: 18px;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .footer {
+            margin-top: 40px;
+            padding: 20px;
+            background-color: #333;
+            color: #fff;
+            font-size: 14px;
+        }
+        .footer a {
+            color: #00d1ff;
+            text-decoration: none;
+        }
+        .footer a:hover {
+            text-decoration: underline;
+        }
+		.menu-exportar {
+    display: none;
+    position: absolute;
+    background-color: #f9f9f9;
+    box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2);
+    padding: 10px;
+    z-index: 1;
+    border-radius: 5px;
+    animation: fadeIn 0.3s ease-in-out; /* Animação de aparecimento */
+}
+
+.menu-exportar button {
+    display: block;
+    width: 100%;
+    padding: 10px;
+    margin: 5px 0;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease; /* Transições suaves */
+}
+
+.menu-exportar button:hover {
+    background-color: #45a049;
+    transform: scale(1.05); /* Efeito de escala ao passar o mouse */
+}
+
+.menu-exportar button:active {
+    background-color: #3d8b40;
+    transform: scale(0.95); /* Efeito de clique */
+}
+
+/* Animação de aparecimento */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    </style>
+</head>
+<body>
+
+    <h1> Catálogo de Bombas </h1>
+
+    <input type="text" id="pesquisa" placeholder="🔎 Pesquisar bomba pelo modelo..." onkeyup="filtrarBombas()">
+    <div class="resultado-pesquisa" id="resultadoPesquisa"></div>
+
+    <h2>🔥 Bombas Mais Pesquisadas 🔥</h2>
+    <div class="bombas-lista" id="bombas-mais-pesquisadas">
+        <!-- Bombas mais pesquisadas serão exibidas aqui -->
+    </div>
+
+    <h2>🔎 Sugestões de Bombas Econômicas</h2>
+    <input type="number" id="alturaManometrica" placeholder="Digite a altura manométrica desejada (m.c.a.)">
+    <input type="number" id="vazaoRequerida" placeholder="Digite a vazão requerida (m³/h)">
+    <button onclick="sugerirBombas()">Buscar Sugestões</button>
+    <div class="sugestoes-bomba" id="sugestoesBomba">
+        <!-- Sugestões de bombas econômicas serão exibidas aqui -->
+    </div>
+
+    <h2>📈 Curva Manométrica</h2>
+    <canvas id="graficoCurva"></canvas>
+
+    <div class="info-bomba" id="infoBomba">
+        <!-- Informações da bomba selecionada serão exibidas aqui -->
+    </div>
+
+    <button class="exportar-botao" onclick="mostrarMenuExportar()">Exportar Catálogo</button>
+    <div class="menu-exportar" id="menuExportar">
+        <button onclick="exportarTXT()">Exportar como TXT</button>
+        <button onclick="exportarPDF()">Exportar como PDF</button>
+        <button onclick="exportarWord()">Exportar como Word</button>
+        <button onclick="exportarJPG()">Exportar como JPG</button>
+        <button onclick="exportarPNG()">Exportar como PNG</button>
+    </div>
+
+    <div class="footer">
+        <p>Desenvolvido por <strong>Antonio Assunção Coelho Neto</strong></p>
+        <p>Conecte-se comigo no <a href="https://www.linkedin.com/in/assunncao-neto-26b349193/" target="_blank">LinkedIn</a></p>
+    </div>
+	
+    </div>
+
+    <script>
+        const tarifaKWh = 0.64207; // Tarifa de energia em R$/kWh
+        const fatorCV = 0.7355; // 1 CV = 0.7355 kW
+
+        const bombas = [
+            // Bombas da marca Leão - Modelo R28A
+            { modelo: "R28A-03 600", potencia_cv: 6, estagios: 3, peso_kg: 63.2, diametro_min_poço_pol: 6, diametro_recalque_pol: "2 1/2 BSP", vazao_m3h: [0, 20, 22, 25, 28, 32, 34, 36], altura_manometrica_mca: [56, 47, 45, 43, 39.5, 35, 31.5, 28.5], pesquisas: 0 },
+            { modelo: "R28A-04 600", potencia_cv: 8, estagios: 4, peso_kg: 73.4, diametro_min_poço_pol: 6, diametro_recalque_pol: "2 1/2 BSP", vazao_m3h: [0, 20, 22, 25, 28, 32, 34, 36], altura_manometrica_mca: [74, 62, 60, 57.5, 53, 46.5, 42.5, 38], pesquisas: 0 },
+            { modelo: "R28A-05 600", potencia_cv: 10, estagios: 5, peso_kg: 80.9, diametro_min_poço_pol: 6, diametro_recalque_pol: "2 1/2 BSP", vazao_m3h: [0, 20, 22, 25, 28, 32, 34, 36], altura_manometrica_mca: [92, 77, 75, 72, 66, 57, 52, 46], pesquisas: 0 },
+            { modelo: "R28A-06 600", potencia_cv: 12, estagios: 6, peso_kg: 86.7, diametro_min_poço_pol: 6, diametro_recalque_pol: "2 1/2 BSP", vazao_m3h: [0, 20, 22, 25, 28, 32, 34, 36], altura_manometrica_mca: [110, 93, 89, 87, 80, 70, 65, 58], pesquisas: 0 },
+            { modelo: "R28A-07 600", potencia_cv: 15, estagios: 7, peso_kg: 107.9, diametro_min_poço_pol: 6, diametro_recalque_pol: "2 1/2 BSP", vazao_m3h: [0, 20, 22, 25, 28, 32, 34, 36], altura_manometrica_mca: [129, 107, 104, 99, 93, 82, 76, 68], pesquisas: 0 },
+            { modelo: "R28A-08 600", potencia_cv: 17, estagios: 8, peso_kg: 115.4, diametro_min_poço_pol: 6, diametro_recalque_pol: "2 1/2 BSP", vazao_m3h: [0, 20, 22, 25, 28, 32, 34, 36], altura_manometrica_mca: [147, 121, 119, 112, 105, 93, 86, 79], pesquisas: 0 },
+            { modelo: "R28A-09 600", potencia_cv: 18, estagios: 9, peso_kg: 117.6, diametro_min_poço_pol: 6, diametro_recalque_pol: "2 1/2 BSP", vazao_m3h: [0, 20, 22, 25, 28, 32, 34, 36], altura_manometrica_mca: [165, 135, 133, 126, 117, 103, 95, 87], pesquisas: 0 },
+            { modelo: "R28A-10 600", potencia_cv: 20, estagios: 10, peso_kg: 122.1, diametro_min_poço_pol: 6, diametro_recalque_pol: "2 1/2 BSP", vazao_m3h: [0, 20, 22, 25, 28, 32, 34, 36], altura_manometrica_mca: [185, 152, 149, 142, 132, 117, 109, 101], pesquisas: 0 },
+            { modelo: "R28A-11 600", potencia_cv: 22.5, estagios: 11, peso_kg: 127, diametro_min_poço_pol: 6, diametro_recalque_pol: "2 1/2 BSP", vazao_m3h: [0, 20, 22, 25, 28, 32, 34, 36], altura_manometrica_mca: [204, 167, 163, 155, 144, 127, 118, 109], pesquisas: 0 },
+            { modelo: "R28A-12 600", potencia_cv: 25, estagios: 12, peso_kg: 131.4, diametro_min_poço_pol: 6, diametro_recalque_pol: "2 1/2 BSP", vazao_m3h: [0, 20, 22, 25, 28, 32, 34, 36], altura_manometrica_mca: [223, 183, 180, 172, 160, 141, 131, 121], pesquisas: 0 },
+            { modelo: "R28A-13 600", potencia_cv: 25, estagios: 13, peso_kg: 134.7, diametro_min_poço_pol: 6, diametro_recalque_pol: "2 1/2 BSP", vazao_m3h: [0, 20, 22, 25, 28, 32, 34, 36], altura_manometrica_mca: [240, 196, 193, 184, 171, 150, 139, 128], pesquisas: 0 },
+            { modelo: "R28A-14 600", potencia_cv: 27.5, estagios: 14, peso_kg: 143.5, diametro_min_poço_pol: 6, diametro_recalque_pol: "2 1/2 BSP", vazao_m3h: [0, 20, 22, 25, 28, 32, 34, 36], altura_manometrica_mca: [259, 211, 208, 199, 186, 163, 151, 139], pesquisas: 0 },
+            { modelo: "R28A-15 600", potencia_cv: 30, estagios: 15, peso_kg: 146, diametro_min_poço_pol: 6, diametro_recalque_pol: "2 1/2 BSP", vazao_m3h: [0, 20, 22, 25, 28, 32, 34, 36], altura_manometrica_mca: [277, 226, 221, 211, 197, 172, 159, 146], pesquisas: 0 },
+            { modelo: "R28A-16 600", potencia_cv: 32.5, estagios: 16, peso_kg: 149.3, diametro_min_poço_pol: 6, diametro_recalque_pol: "2 1/2 BSP", vazao_m3h: [0, 20, 22, 25, 28, 32, 34, 36], altura_manometrica_mca: [296, 244, 240, 229, 212, 188, 174, 161], pesquisas: 0 },
+            { modelo: "R28A-17 600", potencia_cv: 35, estagios: 17, peso_kg: 157.2, diametro_min_poço_pol: 6, diametro_recalque_pol: "2 1/2 BSP", vazao_m3h: [0, 20, 22, 25, 28, 32, 34, 36], altura_manometrica_mca: [314, 259, 254, 242, 224, 199, 184, 167], pesquisas: 0 },
+            { modelo: "R28A-18 600", potencia_cv: 35, estagios: 18, peso_kg: 159.2, diametro_min_poço_pol: 6, diametro_recalque_pol: "2 1/2 BSP", vazao_m3h: [0, 20, 22, 25, 28, 32, 34, 36], altura_manometrica_mca: [332, 273, 268, 256, 240, 211, 195, 180], pesquisas: 0 },
+            { modelo: "R28A-19 600", potencia_cv: 37.5, estagios: 19, peso_kg: 161.3, diametro_min_poço_pol: 6, diametro_recalque_pol: "2 1/2 BSP", vazao_m3h: [0, 20, 22, 25, 28, 32, 34, 36], altura_manometrica_mca: [352, 289, 284, 270, 251, 221, 203, 187], pesquisas: 0 },
+            { modelo: "R28A-20 600", potencia_cv: 37.5, estagios: 20, peso_kg: 163.5, diametro_min_poço_pol: 6, diametro_recalque_pol: "2 1/2 BSP", vazao_m3h: [0, 20, 22, 25, 28, 32, 34, 36], altura_manometrica_mca: [370, 305, 299, 285, 265, 234, 215, 199], pesquisas: 0 },
+
+            // Bombas da marca Leão - Modelo R7A
+            { modelo: "R7A-12 600", potencia_cv: 5, estagios: 12, peso_kg: 73.7, diametro_min_poço_pol: 6, diametro_recalque_pol: "1 1/2 BSP", vazao_m3h: [0, 3.6, 4, 5, 6, 7, 8, 9], altura_manometrica_mca: [190, 168, 162, 153, 140, 127, 110, 90], pesquisas: 0 },
+            { modelo: "R7A-13 600", potencia_cv: 5.5, estagios: 13, peso_kg: 75.4, diametro_min_poço_pol: 6, diametro_recalque_pol: "1 1/2 BSP", vazao_m3h: [0, 3.6, 4, 5, 6, 7, 8, 9], altura_manometrica_mca: [206, 181, 175, 165, 151, 136, 118, 96], pesquisas: 0 },
+            { modelo: "R7A-14 600", potencia_cv: 6, estagios: 14, peso_kg: 79.3, diametro_min_poço_pol: 6, diametro_recalque_pol: "1 1/2 BSP", vazao_m3h: [0, 3.6, 4, 5, 6, 7, 8, 9], altura_manometrica_mca: [222, 196, 190, 179, 165, 148, 129, 105], pesquisas: 0 },
+            { modelo: "R7A-15 600", potencia_cv: 6.5, estagios: 15, peso_kg: 81, diametro_min_poço_pol: 6, diametro_recalque_pol: "1 1/2 BSP", vazao_m3h: [0, 3.6, 4, 5, 6, 7, 8, 9], altura_manometrica_mca: [238, 208, 202, 190, 175, 155, 135, 110], pesquisas: 0 },
+            { modelo: "R7A-16 600", potencia_cv: 7, estagios: 16, peso_kg: 82.7, diametro_min_poço_pol: 6, diametro_recalque_pol: "1 1/2 BSP", vazao_m3h: [0, 3.6, 4, 5, 6, 7, 8, 9], altura_manometrica_mca: [253, 222, 215, 202, 186, 166, 143, 118], pesquisas: 0 },
+            { modelo: "R7A-19 600", potencia_cv: 8, estagios: 19, peso_kg: 94.6, diametro_min_poço_pol: 6, diametro_recalque_pol: "1 1/2 BSP", vazao_m3h: [0, 3.6, 4, 5, 6, 7, 8, 9], altura_manometrica_mca: [302, 262, 254, 240, 220, 197, 171, 140], pesquisas: 0 },
+            { modelo: "R7A-20 600", potencia_cv: 9, estagios: 20, peso_kg: 96.9, diametro_min_poço_pol: 6, diametro_recalque_pol: "1 1/2 BSP", vazao_m3h: [0, 3.6, 4, 5, 6, 7, 8, 9], altura_manometrica_mca: [317, 276, 267, 252, 232, 207, 180, 150], pesquisas: 0 },
+            { modelo: "R7A-22 600", potencia_cv: 10, estagios: 22, peso_kg: 109.9, diametro_min_poço_pol: 6, diametro_recalque_pol: "1 1/2 BSP", vazao_m3h: [0, 3.6, 4, 5, 6, 7, 8, 9], altura_manometrica_mca: [349, 308, 300, 284, 265, 236, 204, 166], pesquisas: 0 },
+            { modelo: "R7A-25 600", potencia_cv: 11, estagios: 25, peso_kg: 115, diametro_min_poço_pol: 6, diametro_recalque_pol: "1 1/2 BSP", vazao_m3h: [0, 3.6, 4, 5, 6, 7, 8, 9], altura_manometrica_mca: [398, 350, 342, 322, 298, 267, 230, 187], pesquisas: 0 },
+            { modelo: "R7A-27 600", potencia_cv: 12, estagios: 27, peso_kg: 122.5, diametro_min_poço_pol: 6, diametro_recalque_pol: "1 1/2 BSP", vazao_m3h: [0, 3.6, 4, 5, 6, 7, 8, 9], altura_manometrica_mca: [430, 380, 370, 348, 322, 287, 249, 203], pesquisas: 0 },
+            { modelo: "R7A-30 600", potencia_cv: 13, estagios: 30, peso_kg: 127.5, diametro_min_poço_pol: 6, diametro_recalque_pol: "1 1/2 BSP", vazao_m3h: [0, 3.6, 4, 5, 6, 7, 8, 9], altura_manometrica_mca: [477, 420, 410, 385, 355, 316, 274, 220], pesquisas: 0 },
+            { modelo: "R7A-32 600", potencia_cv: 14, estagios: 32, peso_kg: 133.7, diametro_min_poço_pol: 6, diametro_recalque_pol: "1 1/2 BSP", vazao_m3h: [0, 3.6, 4, 5, 6, 7, 8, 9], altura_manometrica_mca: [507, 443, 433, 408, 376, 332, 286, 233], pesquisas: 0 },
+
+            // Bombas da marca Leão - Modelo R11A
+			{ modelo: "R11A-08 600", potencia_cv: 5.5, estagios: 8, peso_kg: 68.4, diametro_min_poço_pol: 6, diametro_recalque_pol: "2 BSP", vazao_m3h: [0, 6, 7, 9, 10, 11, 13, 14], altura_manometrica_mca: [130, 108, 104, 95, 91, 87, 72, 63.5], pesquisas: 0 },
+			{ modelo: "R11A-09 600", potencia_cv: 6, estagios: 9, peso_kg: 72.4, diametro_min_poço_pol: 6, diametro_recalque_pol: "2 BSP", vazao_m3h: [0, 6, 7, 9, 10, 11, 13, 14], altura_manometrica_mca: [146, 120, 117, 107, 103, 97, 81, 72], pesquisas: 0 },
+			{ modelo: "R11A-10 600", potencia_cv: 6.5, estagios: 10, peso_kg: 74.3, diametro_min_poço_pol: 6, diametro_recalque_pol: "2 BSP", vazao_m3h: [0, 6, 7, 9, 10, 11, 13, 14], altura_manometrica_mca: [163, 133, 129, 118, 113, 107, 90, 80], pesquisas: 0 },
+			{ modelo: "R11A-11 600", potencia_cv: 7, estagios: 11, peso_kg: 76.2, diametro_min_poço_pol: 6, diametro_recalque_pol: "2 BSP", vazao_m3h: [0, 6, 7, 9, 10, 11, 13, 14], altura_manometrica_mca: [180, 147, 142, 130, 124, 118, 99, 88], pesquisas: 0 },
+			{ modelo: "R11A-12 600", potencia_cv: 8, estagios: 12, peso_kg: 85, diametro_min_poço_pol: 6, diametro_recalque_pol: "2 BSP", vazao_m3h: [0, 6, 7, 9, 10, 11, 13, 14], altura_manometrica_mca: [195, 159, 154, 141, 134, 128, 107, 95], pesquisas: 0 },
+			{ modelo: "R11A-14 600", potencia_cv: 9, estagios: 14, peso_kg: 89.5, diametro_min_poço_pol: 6, diametro_recalque_pol: "2 BSP", vazao_m3h: [0, 6, 7, 9, 10, 11, 13, 14], altura_manometrica_mca: [229, 189, 182, 167, 158, 150, 126, 110], pesquisas: 0 },
+			{ modelo: "R11A-15 600", potencia_cv: 10, estagios: 15, peso_kg: 97.2, diametro_min_poço_pol: 6, diametro_recalque_pol: "2 BSP", vazao_m3h: [0, 6, 7, 9, 10, 11, 13, 14], altura_manometrica_mca: [246, 203, 196, 180, 170, 161, 134, 117], pesquisas: 0 },
+			{ modelo: "R11A-17 600", potencia_cv: 11, estagios: 17, peso_kg: 101.1, diametro_min_poço_pol: 6, diametro_recalque_pol: "2 BSP", vazao_m3h: [0, 6, 7, 9, 10, 11, 13, 14], altura_manometrica_mca: [278, 229, 221, 203, 191, 181, 148, 132], pesquisas: 0 },
+			{ modelo: "R11A-19 600", potencia_cv: 12, estagios: 19, peso_kg: 109, diametro_min_poço_pol: 6, diametro_recalque_pol: "2 BSP", vazao_m3h: [0, 6, 7, 9, 10, 11, 13, 14], altura_manometrica_mca: [310, 257, 248, 228, 216, 204, 166, 151], pesquisas: 0 },
+			{ modelo: "R11A-20 600", potencia_cv: 13, estagios: 20, peso_kg: 110.9, diametro_min_poço_pol: 6, diametro_recalque_pol: "2 BSP", vazao_m3h: [0, 6, 7, 9, 10, 11, 13, 14], altura_manometrica_mca: [326, 269, 259, 239, 227, 212, 174, 157], pesquisas: 0 },
+			{ modelo: "R11A-21 600", potencia_cv: 14, estagios: 21, peso_kg: 116.8, diametro_min_poço_pol: 6, diametro_recalque_pol: "2 BSP", vazao_m3h: [0, 6, 7, 9, 10, 11, 13, 14], altura_manometrica_mca: [347, 292, 282, 263, 248, 233, 197, 175], pesquisas: 0 },
+			{ modelo: "R11A-22 600", potencia_cv: 15, estagios: 22, peso_kg: 135.5, diametro_min_poço_pol: 6, diametro_recalque_pol: "2 BSP", vazao_m3h: [0, 6, 7, 9, 10, 11, 13, 14], altura_manometrica_mca: [361, 305, 295, 275, 259, 246, 210, 186], pesquisas: 0 },
+			{ modelo: "R11A-24 600", potencia_cv: 16, estagios: 24, peso_kg: 145, diametro_min_poço_pol: 6, diametro_recalque_pol: "2 BSP", vazao_m3h: [0, 6, 7, 9, 10, 11, 13, 14], altura_manometrica_mca: [395, 332, 322, 297, 280, 267, 227, 202], pesquisas: 0 },
+			{ modelo: "R11A-26 600", potencia_cv: 17, estagios: 26, peso_kg: 148.8, diametro_min_poço_pol: 6, diametro_recalque_pol: "2 BSP", vazao_m3h: [0, 6, 7, 9, 10, 11, 13, 14], altura_manometrica_mca: [427, 356, 346, 319, 299, 281, 240, 217], pesquisas: 0 },
+			{ modelo: "R11A-27 600", potencia_cv: 17, estagios: 27, peso_kg: 150.6, diametro_min_poço_pol: 6, diametro_recalque_pol: "2 BSP", vazao_m3h: [0, 6, 7, 9, 10, 11, 13, 14], altura_manometrica_mca: [443, 369, 358, 330, 309, 290, 247, 225], pesquisas: 0 },
+			{ modelo: "R11A-28 600", potencia_cv: 18, estagios: 28, peso_kg: 152.5, diametro_min_poço_pol: 6, diametro_recalque_pol: "2 BSP", vazao_m3h: [0, 6, 7, 9, 10, 11, 13, 14], altura_manometrica_mca: [460, 382, 372, 342, 317, 301, 254, 230], pesquisas: 0 },
+
+			// Bombas da marca S30 - Modelo S30
+			{ modelo: "S30-03 600", potencia_cv: 6.5, estagios: 3, peso_kg: 70.2, diametro_min_poço_pol: 6, diametro_recalque_pol: "3 BSP", vazao_m3h: [0, 20, 25, 30, 35, 40, 45, 50], altura_manometrica_mca: [65.5, 47.5, 44, 39.5, 34, 28.5, 21, 16], pesquisas: 0 },
+			{ modelo: "S30-04 600", potencia_cv: 9, estagios: 4, peso_kg: 81.9, diametro_min_poço_pol: 6, diametro_recalque_pol: "3 BSP", vazao_m3h: [0, 20, 25, 30, 35, 40, 45, 50], altura_manometrica_mca: [91, 64, 59, 52.5, 46, 37.5, 29.5, 21.5], pesquisas: 0 },
+			{ modelo: "S30-05 600", potencia_cv: 11, estagios: 5, peso_kg: 91.8, diametro_min_poço_pol: 6, diametro_recalque_pol: "3 BSP", vazao_m3h: [0, 20, 25, 30, 35, 40, 45, 50], altura_manometrica_mca: [113, 81, 75.5, 65.5, 56.5, 46.5, 36, 26], pesquisas: 0 },
+			{ modelo: "S30-06 600", potencia_cv: 13, estagios: 6, peso_kg: 100.1, diametro_min_poço_pol: 6, diametro_recalque_pol: "3 BSP", vazao_m3h: [0, 20, 25, 30, 35, 40, 45, 50], altura_manometrica_mca: [134, 97.5, 88.5, 79, 67, 55, 42.5, 30.5], pesquisas: 0 },
+			{ modelo: "S30-07 600", potencia_cv: 15, estagios: 7, peso_kg: 123.4, diametro_min_poço_pol: 6, diametro_recalque_pol: "3 BSP", vazao_m3h: [0, 20, 25, 30, 35, 40, 45, 50], altura_manometrica_mca: [159, 115, 106, 94.5, 82.5, 66.5, 51.5, 37], pesquisas: 0 },
+			{ modelo: "S30-08 600", potencia_cv: 17, estagios: 8, peso_kg: 133.1, diametro_min_poço_pol: 6, diametro_recalque_pol: "3 BSP", vazao_m3h: [0, 20, 25, 30, 35, 40, 45, 50], altura_manometrica_mca: [181, 130, 120, 108, 93, 76, 58.5, 41.5], pesquisas: 0 },
+			{ modelo: "S30-09 600", potencia_cv: 19, estagios: 9, peso_kg: 139.8, diametro_min_poço_pol: 6, diametro_recalque_pol: "3 BSP", vazao_m3h: [0, 20, 25, 30, 35, 40, 45, 50], altura_manometrica_mca: [208, 150, 138, 122, 107, 87, 65, 45], pesquisas: 0 },
+			{ modelo: "S30-10 600", potencia_cv: 20, estagios: 10, peso_kg: 144, diametro_min_poço_pol: 6, diametro_recalque_pol: "3 BSP", vazao_m3h: [0, 20, 25, 30, 35, 40, 45, 50], altura_manometrica_mca: [226, 165, 154, 133, 115.5, 93, 72, 48], pesquisas: 0 },
+			{ modelo: "S30-11 600", potencia_cv: 22.5, estagios: 11, peso_kg: 151.1, diametro_min_poço_pol: 6, diametro_recalque_pol: "3 BSP", vazao_m3h: [0, 20, 25, 30, 35, 40, 45, 50], altura_manometrica_mca: [254, 183, 167, 149, 126, 102, 78, 50], pesquisas: 0 },
+			{ modelo: "S30-12 600", potencia_cv: 25, estagios: 12, peso_kg: 157.7, diametro_min_poço_pol: 6, diametro_recalque_pol: "3 BSP", vazao_m3h: [0, 20, 25, 30, 35, 40, 45, 50], altura_manometrica_mca: [276, 199, 182, 161, 137, 111, 83, 55], pesquisas: 0 },
+			{ modelo: "S30-13 600", potencia_cv: 27.5, estagios: 13, peso_kg: 167.5, diametro_min_poço_pol: 6, diametro_recalque_pol: "3 BSP", vazao_m3h: [0, 20, 25, 30, 35, 40, 45, 50], altura_manometrica_mca: [297, 214, 196, 173, 148, 120, 92, 60], pesquisas: 0 },
+			{ modelo: "S30-14 600", potencia_cv: 30, estagios: 14, peso_kg: 172.1, diametro_min_poço_pol: 6, diametro_recalque_pol: "3 BSP", vazao_m3h: [0, 20, 25, 30, 35, 40, 45, 50], altura_manometrica_mca: [322, 231, 213, 188, 161, 129, 98, 66.5], pesquisas: 0 },
+			{ modelo: "S30-15 600", potencia_cv: 30, estagios: 15, peso_kg: 176.3, diametro_min_poço_pol: 6, diametro_recalque_pol: "3 BSP", vazao_m3h: [0, 20, 25, 30, 35, 40, 45, 50], altura_manometrica_mca: [335, 243, 223, 199, 171, 135, 101, 70], pesquisas: 0 },
+			{ modelo: "S30-16 600", potencia_cv: 32.5, estagios: 16, peso_kg: 181.9, diametro_min_poço_pol: 6, diametro_recalque_pol: "3 BSP", vazao_m3h: [0, 20, 25, 30, 35, 40, 45, 50], altura_manometrica_mca: [359, 260, 239, 212, 183, 144, 108, 74], pesquisas: 0 },
+			{ modelo: "S30-17 600", potencia_cv: 35, estagios: 17, peso_kg: 192, diametro_min_poço_pol: 6, diametro_recalque_pol: "3 BSP", vazao_m3h: [0, 20, 25, 30, 35, 40, 45, 50], altura_manometrica_mca: [372, 270, 250, 221, 192, 151, 115.5, 77], pesquisas: 0 },
+			{ modelo: "S30-18 600", potencia_cv: 37.5, estagios: 18, peso_kg: 196.2, diametro_min_poço_pol: 6, diametro_recalque_pol: "3 BSP", vazao_m3h: [0, 20, 25, 30, 35, 40, 45, 50], altura_manometrica_mca: [394, 283, 265, 234, 203, 161, 121, 83], pesquisas: 0 },
+			{ modelo: "S30-19 600", potencia_cv: 37.5, estagios: 19, peso_kg: 200.4, diametro_min_poço_pol: 6, diametro_recalque_pol: "3 BSP", vazao_m3h: [0, 20, 25, 30, 35, 40, 45, 50], altura_manometrica_mca: [410, 300, 279, 243, 212, 170, 128, 90], pesquisas: 0 },
+			
+			// Bombas da marca S35 - Modelo S35
+			{ modelo: "S35-02 600", potencia_cv: 5, estagios: 2, peso_kg: 64, diametro_min_poço_pol: 6, diametro_recalque_pol: "3 BSP", vazao_m3h: [0, 25, 30, 35, 37.5, 40, 45, 50], altura_manometrica_mca: [45, 31.5, 29, 26.5, 24.5, 23, 19, 15], pesquisas: 0 },
+			{ modelo: "S35-03 600", potencia_cv: 8, estagios: 3, peso_kg: 77.1, diametro_min_poço_pol: 6, diametro_recalque_pol: "3 BSP", vazao_m3h: [0, 25, 30, 35, 37.5, 40, 45, 50], altura_manometrica_mca: [71, 47, 43, 39, 35.5, 33, 27.5, 20], pesquisas: 0 },
+			{ modelo: "S35-04 600", potencia_cv: 10, estagios: 4, peso_kg: 87.8, diametro_min_poço_pol: 6, diametro_recalque_pol: "3 BSP", vazao_m3h: [0, 25, 30, 35, 37.5, 40, 45, 50], altura_manometrica_mca: [95, 63, 57, 52, 47, 43.5, 35, 25], pesquisas: 0 },
+			{ modelo: "S35-05 600", potencia_cv: 12, estagios: 5, peso_kg: 96.2, diametro_min_poço_pol: 6, diametro_recalque_pol: "3 BSP", vazao_m3h: [0, 25, 30, 35, 37.5, 40, 45, 50], altura_manometrica_mca: [120, 81, 73.5, 63.5, 59, 54.5, 44.5, 32.5], pesquisas: 0 },
+			{ modelo: "S35-06 600", potencia_cv: 13, estagios: 6, peso_kg: 100.5, diametro_min_poço_pol: 6, diametro_recalque_pol: "3 BSP", vazao_m3h: [0, 25, 30, 35, 37.5, 40, 45, 50], altura_manometrica_mca: [141, 95, 85.5, 75, 71, 63, 50, 34.5], pesquisas: 0 },
+			{ modelo: "S35-07 600", potencia_cv: 16, estagios: 7, peso_kg: 129.4, diametro_min_poço_pol: 6, diametro_recalque_pol: "3 BSP", vazao_m3h: [0, 25, 30, 35, 37.5, 40, 45, 50], altura_manometrica_mca: [167, 113, 102, 90, 84, 77, 62, 45], pesquisas: 0 },
+			{ modelo: "S35-08 600", potencia_cv: 18, estagios: 8, peso_kg: 133.7, diametro_min_poço_pol: 6, diametro_recalque_pol: "3 BSP", vazao_m3h: [0, 25, 30, 35, 37.5, 40, 45, 50], altura_manometrica_mca: [190, 127, 115.5, 101.5, 94, 87, 67.5, 49], pesquisas: 0 },
+			{ modelo: "S35-09 600", potencia_cv: 20, estagios: 9, peso_kg: 140.5, diametro_min_poço_pol: 6, diametro_recalque_pol: "3 BSP", vazao_m3h: [0, 25, 30, 35, 37.5, 40, 45, 50], altura_manometrica_mca: [214, 144, 128.5, 113, 106, 99, 76, 55], pesquisas: 0 },
+			{ modelo: "S35-10 600", potencia_cv: 22.5, estagios: 10, peso_kg: 147.6, diametro_min_poço_pol: 6, diametro_recalque_pol: "3 BSP", vazao_m3h: [0, 25, 30, 35, 37.5, 40, 45, 50], altura_manometrica_mca: [239, 161, 145, 125.5, 116, 107, 86, 60], pesquisas: 0 },
+			{ modelo: "S35-11 600", potencia_cv: 25, estagios: 11, peso_kg: 154.2, diametro_min_poço_pol: 6, diametro_recalque_pol: "3 BSP", vazao_m3h: [0, 25, 30, 35, 37.5, 40, 45, 50], altura_manometrica_mca: [264, 176, 159, 137, 128, 118, 94, 67], pesquisas: 0 },
+			{ modelo: "S35-12 600", potencia_cv: 27.5, estagios: 12, peso_kg: 164, diametro_min_poço_pol: 6, diametro_recalque_pol: "3 BSP", vazao_m3h: [0, 25, 30, 35, 37.5, 40, 45, 50], altura_manometrica_mca: [285, 194, 172, 154, 141, 128.5, 103.5, 74], pesquisas: 0 },
+			{ modelo: "S35-13 600", potencia_cv: 30, estagios: 13, peso_kg: 168, diametro_min_poço_pol: 6, diametro_recalque_pol: "3 BSP", vazao_m3h: [0, 25, 30, 35, 37.5, 40, 45, 50], altura_manometrica_mca: [310, 207, 187, 163, 151, 139, 111, 79], pesquisas: 0 },
+			{ modelo: "S35-14 600", potencia_cv: 32.5, estagios: 14, peso_kg: 174.3, diametro_min_poço_pol: 6, diametro_recalque_pol: "3 BSP", vazao_m3h: [0, 25, 30, 35, 37.5, 40, 45, 50], altura_manometrica_mca: [332, 223, 201, 176, 162, 152, 119, 86], pesquisas: 0 },
+			{ modelo: "S35-15 600", potencia_cv: 35, estagios: 15, peso_kg: 184.4, diametro_min_poço_pol: 6, diametro_recalque_pol: "3 BSP", vazao_m3h: [0, 25, 30, 35, 37.5, 40, 45, 50], altura_manometrica_mca: [353, 236, 212, 191, 171, 159, 125, 91], pesquisas: 0 },
+			{ modelo: "S35-16 600", potencia_cv: 37.5, estagios: 16, peso_kg: 188.7, diametro_min_poço_pol: 6, diametro_recalque_pol: "3 BSP", vazao_m3h: [0, 25, 30, 35, 37.5, 40, 45, 50], altura_manometrica_mca: [372, 253, 227, 199, 184, 167, 132, 96], pesquisas: 0 },
+			{ modelo: "S35-17 600", potencia_cv: 37.5, estagios: 17, peso_kg: 193, diametro_min_poço_pol: 6, diametro_recalque_pol: "3 BSP", vazao_m3h: [0, 25, 30, 35, 37.5, 40, 45, 50], altura_manometrica_mca: [393, 263, 236, 207, 193, 175, 137, 100], pesquisas: 0 },
+			{ modelo: "S35-18 600", potencia_cv: 40, estagios: 18, peso_kg: 254.5, diametro_min_poço_pol: 6, diametro_recalque_pol: "3 BSP", vazao_m3h: [0, 25, 30, 35, 37.5, 40, 45, 50], altura_manometrica_mca: [411, 281, 254, 225, 211, 194, 156, 110], pesquisas: 0 },
+			{ modelo: "S35-19 600", potencia_cv: 45, estagios: 19, peso_kg: 273.8, diametro_min_poço_pol: 6, diametro_recalque_pol: "3 BSP", vazao_m3h: [0, 25, 30, 35, 37.5, 40, 45, 50], altura_manometrica_mca: [430, 298, 270, 241, 225, 207, 166, 118], pesquisas: 0 },
+			
+			// Bombas da marca R20A - Modelo R20A
+			{ modelo: "R20A-05 600", potencia_cv: 5.5, estagios: 5, peso_kg: 65.4, diametro_min_poço_pol: 6, diametro_recalque_pol: "2 1/2 BSP", vazao_m3h: [0, 12, 14, 16, 18, 20, 22, 24], altura_manometrica_mca: [88, 72, 67.5, 63, 56, 50, 42.5, 33.5], pesquisas: 0 },
+			{ modelo: "R20A-06 600", potencia_cv: 6, estagios: 6, peso_kg: 69.7, diametro_min_poço_pol: 6, diametro_recalque_pol: "2 1/2 BSP", vazao_m3h: [0, 12, 14, 16, 18, 20, 22, 24], altura_manometrica_mca: [106, 87, 82, 78, 71, 61.5, 53, 44], pesquisas: 0 },
+			{ modelo: "R20A-07 600", potencia_cv: 7, estagios: 7, peso_kg: 71.8, diametro_min_poço_pol: 6, diametro_recalque_pol: "2 1/2 BSP", vazao_m3h: [0, 12, 14, 16, 18, 20, 22, 24], altura_manometrica_mca: [122, 100, 95, 90, 81, 71, 61, 49], pesquisas: 0 },
+			{ modelo: "R20A-08 600", potencia_cv: 8, estagios: 8, peso_kg: 81.4, diametro_min_poço_pol: 6, diametro_recalque_pol: "2 1/2 BSP", vazao_m3h: [0, 12, 14, 16, 18, 20, 22, 24], altura_manometrica_mca: [140, 115, 110, 103, 94, 83, 72, 60.5], pesquisas: 0 },
+			{ modelo: "R20A-09 600", potencia_cv: 9, estagios: 9, peso_kg: 83.6, diametro_min_poço_pol: 6, diametro_recalque_pol: "2 1/2 BSP", vazao_m3h: [0, 12, 14, 16, 18, 20, 22, 24], altura_manometrica_mca: [157, 128, 122, 114, 104, 92, 79, 66], pesquisas: 0 },
+			{ modelo: "R20A-10 600", potencia_cv: 11, estagios: 10, peso_kg: 88.5, diametro_min_poço_pol: 6, diametro_recalque_pol: "2 1/2 BSP", vazao_m3h: [0, 12, 14, 16, 18, 20, 22, 24], altura_manometrica_mca: [175, 142, 136, 128, 116, 104, 89, 75], pesquisas: 0 },
+			{ modelo: "R20A-11 600", potencia_cv: 11, estagios: 11, peso_kg: 93.5, diametro_min_poço_pol: 6, diametro_recalque_pol: "2 1/2 BSP", vazao_m3h: [0, 12, 14, 16, 18, 20, 22, 24], altura_manometrica_mca: [192, 155, 148, 139, 126.5, 112, 96, 80], pesquisas: 0 },
+			{ modelo: "R20A-12 600", potencia_cv: 12, estagios: 12, peso_kg: 99.8, diametro_min_poço_pol: 6, diametro_recalque_pol: "2 1/2 BSP", vazao_m3h: [0, 12, 14, 16, 18, 20, 22, 24], altura_manometrica_mca: [209, 170, 162, 151, 138, 123, 105, 88], pesquisas: 0 },
+			{ modelo: "R20A-13 600", potencia_cv: 13, estagios: 13, peso_kg: 101.4, diametro_min_poço_pol: 6, diametro_recalque_pol: "2 1/2 BSP", vazao_m3h: [0, 12, 14, 16, 18, 20, 22, 24], altura_manometrica_mca: [227, 184, 175, 163, 148, 132, 112, 93], pesquisas: 0 },
+			{ modelo: "R20A-14 600", potencia_cv: 15, estagios: 14, peso_kg: 123.1, diametro_min_poço_pol: 6, diametro_recalque_pol: "2 1/2 BSP", vazao_m3h: [0, 12, 14, 16, 18, 20, 22, 24], altura_manometrica_mca: [246, 201, 192, 180, 163, 146, 124, 104], pesquisas: 0 },
+			{ modelo: "R20A-15 600", potencia_cv: 16, estagios: 15, peso_kg: 131.2, diametro_min_poço_pol: 6, diametro_recalque_pol: "2 1/2 BSP", vazao_m3h: [0, 12, 14, 16, 18, 20, 22, 24], altura_manometrica_mca: [264, 214, 204, 192, 174, 154, 131, 110], pesquisas: 0 },
+			{ modelo: "R20A-16 600", potencia_cv: 17, estagios: 16, peso_kg: 135.3, diametro_min_poço_pol: 6, diametro_recalque_pol: "2 1/2 BSP", vazao_m3h: [0, 12, 14, 16, 18, 20, 22, 24], altura_manometrica_mca: [281, 228, 218, 205, 187, 164, 141, 117], pesquisas: 0 },
+			{ modelo: "R20A-17 600", potencia_cv: 18, estagios: 17, peso_kg: 137.4, diametro_min_poço_pol: 6, diametro_recalque_pol: "2 1/2 BSP", vazao_m3h: [0, 12, 14, 16, 18, 20, 22, 24], altura_manometrica_mca: [298, 242, 232, 218, 198, 174, 148, 123], pesquisas: 0 },
+			{ modelo: "R20A-19 600", potencia_cv: 19, estagios: 19, peso_kg: 144.2, diametro_min_poço_pol: 6, diametro_recalque_pol: "2 1/2 BSP", vazao_m3h: [0, 12, 14, 16, 18, 20, 22, 24], altura_manometrica_mca: [333, 270, 259, 241, 219, 192, 165, 136], pesquisas: 0 },
+			{ modelo: "R20A-20 600", potencia_cv: 20, estagios: 20, peso_kg: 146.3, diametro_min_poço_pol: 6, diametro_recalque_pol: "2 1/2 BSP", vazao_m3h: [0, 12, 14, 16, 18, 20, 22, 24], altura_manometrica_mca: [351, 284, 273, 253, 230, 202, 173, 142], pesquisas: 0 },
+			{ modelo: "R20A-22 600", potencia_cv: 22.5, estagios: 22, peso_kg: 155.9, diametro_min_poço_pol: 6, diametro_recalque_pol: "2 1/2 BSP", vazao_m3h: [0, 12, 14, 16, 18, 20, 22, 24], altura_manometrica_mca: [386, 314, 302, 282, 257, 222, 193, 157], pesquisas: 0 },
+			{ modelo: "R20A-24 600", potencia_cv: 25, estagios: 24, peso_kg: 162.3, diametro_min_poço_pol: 6, diametro_recalque_pol: "2 1/2 BSP", vazao_m3h: [0, 12, 14, 16, 18, 20, 22, 24], altura_manometrica_mca: [422, 347, 334, 312, 289, 248, 215, 177], pesquisas: 0 },
+			];
+
+		
+         // Configuração do gráfico
+    let ctx = document.getElementById('graficoCurva').getContext('2d');
+        let grafico = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [], // Rótulos serão definidos dinamicamente
+                datasets: [{
+                    label: "MCA (Altura Manométrica)",
+                    data: [],
+                    borderColor: "blue",
+                    backgroundColor: "rgba(0, 0, 255, 0.2)",
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: false,
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: "Vazão (m³/h)"
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: "MCA (m)"
+                        },
+                        beginAtZero: false
+                    }
+                }
+            }
+        });
+
+        // Função para mostrar a curva manométrica
+        function mostrarCurva(index) {
+            const bomba = bombas[index];
+            grafico.data.labels = bomba.vazao_m3h; // Define os rótulos do gráfico com base na vazão da bomba selecionada
+            grafico.data.datasets[0].data = bomba.altura_manometrica_mca;
+            grafico.data.datasets[0].label = `Curva de ${bomba.modelo}`;
+            grafico.update();
+            mostrarInfoBomba(index);
+            bombas[index].pesquisas++;
+            atualizarMaisPesquisadas();
+        }
+
+        // Função para exibir informações da bomba
+        function mostrarInfoBomba(index) {
+            const bomba = bombas[index];
+            const potencia_kW = (bomba.potencia_cv * fatorCV).toFixed(2);
+            const custoPorHora = (potencia_kW * tarifaKWh).toFixed(2);
+            const infoDiv = document.getElementById("infoBomba");
+            infoDiv.innerHTML = `
+                <p><strong>Modelo:</strong> ${bomba.modelo}</p>
+                <p><strong>Potência:</strong> ${bomba.potencia_cv} CV (${potencia_kW} kW)</p>
+                <p><strong>Estágios:</strong> ${bomba.estagios}</p>
+                <p><strong>Peso:</strong> ${bomba.peso_kg} kg</p>
+                <p><strong>Diâmetro Mínimo do Poço:</strong> ${bomba.diametro_min_poço_pol} pol.</p>
+                <p><strong>Diâmetro do Recalque:</strong> ${bomba.diametro_recalque_pol}</p>
+                <p><strong>Custo de Energia por Hora:</strong> R$ ${custoPorHora}</p>
+            `;
+        }
+
+        // Função para atualizar as bombas mais pesquisadas
+        function atualizarMaisPesquisadas() {
+            const container = document.getElementById("bombas-mais-pesquisadas");
+            container.innerHTML = "";
+
+            const maisPesquisadas = bombas
+                .sort((a, b) => b.pesquisas - a.pesquisas)
+                .slice(0, 3);
+
+            maisPesquisadas.forEach((bomba) => {
+                let botao = document.createElement("div");
+                botao.classList.add("bomba");
+                botao.innerText = bomba.modelo;
+                botao.onclick = () => mostrarCurva(bombas.indexOf(bomba));
+                container.appendChild(botao);
+            });
+        }
+
+        // Função para filtrar bombas pelo modelo
+        function filtrarBombas() {
+            let termoPesquisa = document.getElementById("pesquisa").value.toLowerCase();
+            const resultadosDiv = document.getElementById("resultadoPesquisa");
+            resultadosDiv.innerHTML = "";
+
+            const bombasFiltradas = bombas.filter(bomba => bomba.modelo.toLowerCase().includes(termoPesquisa));
+
+            if (bombasFiltradas.length > 0) {
+                bombasFiltradas.forEach((bomba) => {
+                    let item = document.createElement("div");
+                    item.innerText = bomba.modelo;
+                    item.onclick = () => mostrarCurva(bombas.indexOf(bomba));
+                    resultadosDiv.appendChild(item);
+                });
+            } else {
+                resultadosDiv.innerHTML = "<div>Nenhum resultado encontrado</div>";
+            }
+        }
+
+        // Função para sugerir bombas econômicas
+        function sugerirBombas() {
+            const alturaDesejada = parseFloat(document.getElementById("alturaManometrica").value);
+            if (isNaN(alturaDesejada)) {
+                alert("Por favor, insira uma altura manométrica válida.");
+                return;
+            }
+
+            const bombasSugeridas = bombas
+                .filter(bomba => Math.max(...bomba.altura_manometrica_mca) >= alturaDesejada)
+                .sort((a, b) => a.potencia_cv - b.potencia_cv); // Ordenar por potência (mais econômica)
+
+            const sugestoesDiv = document.getElementById("sugestoesBomba");
+            if (bombasSugeridas.length > 0) {
+                sugestoesDiv.innerHTML = `
+                    <h3>Sugestões de Bombas:</h3>
+                    <ul>
+                        ${bombasSugeridas.map(bomba => `<li>${bomba.modelo} (Potência: ${bomba.potencia_cv} CV)</li>`).join('')}
+                    </ul>
+                `;
+            } else {
+                sugestoesDiv.innerHTML = `<p>Nenhuma bomba encontrada para a altura manométrica desejada.</p>`;
+            }
+        }
+
+        // Função para mostrar/ocultar o menu de exportação
+function mostrarMenuExportar() {
+    const menu = document.getElementById("menuExportar");
+    menu.style.display = menu.style.display === "block" ? "none" : "block";
+}
+
+// Fechar o menu se clicar fora dele
+window.onclick = function (event) {
+    const menu = document.getElementById("menuExportar");
+    if (event.target !== menu && !event.target.matches('.exportar-botao')) {
+        menu.style.display = "none";
+    }
+};
+
+// Função para exibir feedback visual
+function exibirFeedback(mensagem) {
+    const feedback = document.createElement("div");
+    feedback.style.position = "fixed";
+    feedback.style.bottom = "20px";
+    feedback.style.right = "20px";
+    feedback.style.backgroundColor = "#4CAF50";
+    feedback.style.color = "white";
+    feedback.style.padding = "10px 20px";
+    feedback.style.borderRadius = "5px";
+    feedback.style.boxShadow = "0 4px 8px rgba(0, 0, 0, 0.2)";
+    feedback.style.zIndex = "1000";
+    feedback.innerText = mensagem;
+    document.body.appendChild(feedback);
+
+    // Remover o feedback após 3 segundos
+    setTimeout(() => {
+        feedback.remove();
+    }, 3000);
+}
+
+// Funções de exportação com feedback
+function exportarTXT() {
+    const conteudo = document.getElementById("infoBomba").innerText;
+    const blob = new Blob([conteudo], { type: "text/plain;charset=utf-8" });
+    saveAs(blob, "catalogo_bombas.txt");
+    exibirFeedback("Catálogo exportado como TXT com sucesso!");
+}
+
+function exportarPDF() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    const conteudo = document.getElementById("infoBomba").innerText;
+    doc.text(conteudo, 10, 10);
+    doc.save("catalogo_bombas.pdf");
+    exibirFeedback("Catálogo exportado como PDF com sucesso!");
+}
+
+function exportarWord() {
+    const conteudo = document.getElementById("infoBomba").innerText;
+    const blob = new Blob([conteudo], { type: "application/msword" });
+    saveAs(blob, "catalogo_bombas.doc");
+    exibirFeedback("Catálogo exportado como Word com sucesso!");
+}
+
+function exportarJPG() {
+    html2canvas(document.body).then(canvas => {
+        const imgData = canvas.toDataURL("image/jpeg");
+        const link = document.createElement("a");
+        link.href = imgData;
+        link.download = "catalogo_bombas.jpg";
+        link.click();
+        exibirFeedback("Catálogo exportado como JPG com sucesso!");
+    });
+}
+
+function exportarPNG() {
+    html2canvas(document.body).then(canvas => {
+        const imgData = canvas.toDataURL("image/png");
+        const link = document.createElement("a");
+        link.href = imgData;
+        link.download = "catalogo_bombas.png";
+        link.click();
+        exibirFeedback("Catálogo exportado como PNG com sucesso!");
+    });
+}
+
+        // Inicialização
+        atualizarMaisPesquisadas();
+    </script>
+</body>
+</html>
